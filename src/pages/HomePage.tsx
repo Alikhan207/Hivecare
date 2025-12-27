@@ -300,8 +300,8 @@ const HomePage = () => {
               <Leaf className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-2">Why Rock Bees Matter</h4>
-              <p className="text-sm text-foreground/80 leading-relaxed">
+              <h4 className="font-bold text-lg mb-2 text-primary">Why Rock Bees Matter</h4>
+              <p className="text-sm text-foreground leading-relaxed">
                 Apis dorsata (Rock Bee) is responsible for 80% of India's wild honey production and plays a crucial role in pollinating wild plants, forest ecosystems, and agricultural crops. Unlike domesticated bees, they cannot be kept in boxes - they are wild, migratory, and essential for biodiversity.
               </p>
             </div>
