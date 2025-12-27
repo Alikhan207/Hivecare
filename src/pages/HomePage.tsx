@@ -262,9 +262,9 @@ const HomePage = () => {
       <section className="px-6 py-12 bg-card/50">
         <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
           {[
-            { value: '80%', label: 'Wild Honey Production', icon: Hexagon },
-            { value: '1M+', label: 'Colonies in India', icon: MapPin },
-            { value: '0', label: 'Species Identified', icon: Camera },
+            { value: '80%', label: 'Wild Honey Production', icon: Hexagon, gradient: 'from-amber-500 to-orange-600' },
+            { value: '1M+', label: 'Colonies in India', icon: MapPin, gradient: 'from-emerald-500 to-green-600' },
+            { value: '0', label: 'Species Identified', icon: Camera, gradient: 'from-blue-500 to-indigo-600' },
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -272,10 +272,14 @@ const HomePage = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="p-4 rounded-2xl bg-background border border-border text-center"
+              whileHover={{ scale: 1.05, y: -4 }}
+              className="relative p-4 rounded-2xl bg-background border border-border text-center overflow-hidden group cursor-pointer"
             >
-              <stat.icon className="w-6 h-6 text-primary mx-auto mb-2" />
-              <div className="text-2xl font-bold text-primary">{stat.value}</div>
+              <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center mx-auto mb-2 shadow-lg`}>
+                <stat.icon className="w-5 h-5 text-white" />
+              </div>
+              <div className={`text-2xl font-bold bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>{stat.value}</div>
               <div className="text-xs text-muted-foreground">{stat.label}</div>
             </motion.div>
           ))}
@@ -288,22 +292,31 @@ const HomePage = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="relative p-6 rounded-3xl overflow-hidden"
+          className="relative p-6 rounded-3xl overflow-hidden group"
         >
-          <div className="absolute inset-0">
-            <img src={heroImage} alt="Rock bee colony" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/70" />
-          </div>
+          {/* Animated glow effect */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary/40 via-amber-500/30 to-primary/40 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-pulse" />
           
-          <div className="relative flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl gradient-nature flex items-center justify-center flex-shrink-0">
-              <Leaf className="w-7 h-7 text-white" />
+          <div className="relative rounded-3xl overflow-hidden">
+            <div className="absolute inset-0">
+              <img src={heroImage} alt="Rock bee colony" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/70" />
             </div>
-            <div>
-              <h4 className="font-bold text-lg mb-2 text-primary">Why Rock Bees Matter</h4>
-              <p className="text-sm text-foreground leading-relaxed">
-                Apis dorsata (Rock Bee) is responsible for 80% of India's wild honey production and plays a crucial role in pollinating wild plants, forest ecosystems, and agricultural crops. Unlike domesticated bees, they cannot be kept in boxes - they are wild, migratory, and essential for biodiversity.
-              </p>
+            
+            <div className="relative p-2 flex items-start gap-4">
+              <motion.div 
+                className="w-14 h-14 rounded-2xl gradient-nature flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/30"
+                whileHover={{ rotate: 5, scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <Leaf className="w-7 h-7 text-white" />
+              </motion.div>
+              <div>
+                <h4 className="font-bold text-lg mb-2 text-primary drop-shadow-sm">Why Rock Bees Matter</h4>
+                <p className="text-sm text-foreground leading-relaxed">
+                  Apis dorsata (Rock Bee) is responsible for 80% of India's wild honey production and plays a crucial role in pollinating wild plants, forest ecosystems, and agricultural crops. Unlike domesticated bees, they cannot be kept in boxes - they are wild, migratory, and essential for biodiversity.
+                </p>
+              </div>
             </div>
           </div>
         </motion.div>
