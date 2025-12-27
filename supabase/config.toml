@@ -1,0 +1,4 @@
+project_id = "vqcpeyxrvwxwvjzsqgqx"
+
+[functions.analyze-bee]
+verify_jwt = false
