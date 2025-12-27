@@ -166,6 +166,60 @@ export type Database = {
           },
         ]
       }
+      urban_guardians: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          is_available: boolean | null
+          latitude: number | null
+          longitude: number | null
+          phone: string
+          radius_km: number | null
+          rating: number | null
+          service_area: string | null
+          total_relocations: number | null
+          updated_at: string
+          user_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          is_available?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          phone: string
+          radius_km?: number | null
+          rating?: number | null
+          service_area?: string | null
+          total_relocations?: number | null
+          updated_at?: string
+          user_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_available?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          phone?: string
+          radius_km?: number | null
+          rating?: number | null
+          service_area?: string | null
+          total_relocations?: number | null
+          updated_at?: string
+          user_id?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
