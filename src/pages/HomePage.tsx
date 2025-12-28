@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { 
   Camera, MapPin, Shield, ChevronRight, Hexagon, User, 
   Leaf, BarChart3, Play, Pause, Volume2, VolumeX,
@@ -13,12 +13,47 @@ import BottomNav from '@/components/hivecare/BottomNav';
 import heroVideo from '@/assets/hero-video.mp4';
 import heroImage from '@/assets/hero-bee-colony.jpg';
 
+const FloatingHoneycomb = ({ className, delay = 0, size = 60 }: { className?: string; delay?: number; size?: number }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.5 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ delay, duration: 1 }}
+    className={className}
+    style={{ width: size, height: size }}
+  >
+    <svg viewBox="0 0 100 100" className="w-full h-full">
+      <polygon
+        points="50,2 93,25 93,75 50,98 7,75 7,25"
+        fill="none"
+        stroke="hsl(40 96% 53%)"
+        strokeWidth="1.5"
+        opacity="0.3"
+      />
+      <polygon
+        points="50,15 80,32 80,68 50,85 20,68 20,32"
+        fill="hsl(40 96% 53%)"
+        opacity="0.08"
+      />
+    </svg>
+  </motion.div>
+);
+
 const HomePage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [showContent, setShowContent] = useState(false);
+  
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
+  
+  const videoY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
+  const overlayOpacity = useTransform(scrollYProgress, [0, 0.5], [0.3, 0.8]);
 
   useEffect(() => {
     supabase.auth.onAuthStateChange((event, session) => {
@@ -67,15 +102,30 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Hero Section with Video */}
-      <section className="relative h-screen overflow-hidden">
-        {/* Video Background */}
-        <div className="absolute inset-0">
+      <section ref={heroRef} className="relative h-screen overflow-hidden">
+        {/* Floating Honeycomb Background */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-[1]">
+          <FloatingHoneycomb className="absolute top-[10%] left-[5%] honeycomb-float" delay={0} size={80} />
+          <FloatingHoneycomb className="absolute top-[20%] right-[10%] honeycomb-float-reverse" delay={0.3} size={60} />
+          <FloatingHoneycomb className="absolute top-[35%] left-[15%] honeycomb-drift" delay={0.6} size={50} />
+          <FloatingHoneycomb className="absolute top-[50%] right-[5%] honeycomb-float" delay={0.9} size={70} />
+          <FloatingHoneycomb className="absolute top-[15%] left-[40%] honeycomb-float-reverse" delay={1.2} size={45} />
+          <FloatingHoneycomb className="absolute top-[60%] left-[8%] honeycomb-drift" delay={1.5} size={55} />
+          <FloatingHoneycomb className="absolute top-[40%] right-[20%] honeycomb-float" delay={0.4} size={65} />
+          <FloatingHoneycomb className="absolute top-[70%] right-[15%] honeycomb-float-reverse" delay={0.7} size={40} />
+        </div>
+
+        {/* Video Background with Parallax */}
+        <motion.div 
+          className="absolute inset-0"
+          style={{ y: videoY }}
+        >
           <video
             autoPlay
             loop
             muted={isMuted}
             playsInline
-            className="w-full h-full object-cover"
+            className="w-full h-[120%] object-cover"
             poster={heroImage}
           >
             <source src={heroVideo} type="video/mp4" />
@@ -83,8 +133,12 @@ const HomePage = () => {
           
           {/* Overlays */}
           <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/30 to-background" />
+          <motion.div 
+            className="absolute inset-0 bg-background"
+            style={{ opacity: overlayOpacity }}
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
-        </div>
+        </motion.div>
 
         {/* Video Controls */}
         <div className="absolute top-6 right-6 flex gap-2 z-20 safe-top">
@@ -129,8 +183,11 @@ const HomePage = () => {
           </div>
         </header>
 
-        {/* Hero Content */}
-        <div className="relative z-10 h-full flex flex-col justify-end pb-32 px-6">
+        {/* Hero Content with Parallax */}
+        <motion.div 
+          className="relative z-10 h-full flex flex-col justify-end pb-32 px-6"
+          style={{ y: contentY }}
+        >
           <AnimatePresence>
             {showContent && (
               <motion.div
@@ -182,7 +239,7 @@ const HomePage = () => {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         {/* Scroll Indicator */}
         <motion.div 
