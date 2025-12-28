@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform, useInView } from 'framer-motion';
 import { 
   Camera, MapPin, Shield, ChevronRight, Hexagon, User, 
   Leaf, BarChart3, Play, Pause, Volume2, VolumeX,
@@ -13,6 +13,7 @@ import BottomNav from '@/components/hivecare/BottomNav';
 import heroVideo from '@/assets/hero-video.mp4';
 import heroImage from '@/assets/hero-bee-colony.jpg';
 
+// Floating Honeycomb Component
 const FloatingHoneycomb = ({ className, delay = 0, size = 60 }: { className?: string; delay?: number; size?: number }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.5 }}
@@ -37,6 +38,88 @@ const FloatingHoneycomb = ({ className, delay = 0, size = 60 }: { className?: st
     </svg>
   </motion.div>
 );
+
+// Honey Drop Particle Component
+const HoneyDrop = ({ delay = 0, left, duration = 8 }: { delay?: number; left: string; duration?: number }) => (
+  <motion.div
+    className="absolute bottom-0 w-2 h-3 rounded-full"
+    style={{ 
+      left,
+      background: 'linear-gradient(180deg, hsl(40 96% 53%) 0%, hsl(35 95% 40%) 100%)',
+      boxShadow: '0 0 8px hsl(40 96% 53% / 0.5)'
+    }}
+    initial={{ y: 0, opacity: 0, scale: 0.5 }}
+    animate={{ 
+      y: [0, -1200],
+      opacity: [0, 0.8, 0.8, 0],
+      scale: [0.5, 1, 1, 0.3]
+    }}
+    transition={{
+      duration,
+      delay,
+      repeat: Infinity,
+      ease: "easeOut"
+    }}
+  />
+);
+
+// Animated Bee Component with Bezier Path
+const FlyingBee = ({ delay = 0 }: { delay?: number }) => {
+  return (
+    <motion.div
+      className="absolute"
+      style={{
+        offsetPath: "path('M -50 300 Q 150 100 300 250 T 500 150 T 700 300 T 900 200')",
+        offsetRotate: "0deg",
+        width: 32,
+        height: 32
+      }}
+      animate={{ 
+        offsetDistance: ["0%", "100%"]
+      }}
+      transition={{
+        duration: 12,
+        delay,
+        repeat: Infinity,
+        ease: "linear" as const
+      }}
+    >
+      <svg viewBox="0 0 64 64" className="w-full h-full bee-fly">
+        {/* Bee body */}
+        <ellipse cx="32" cy="32" rx="14" ry="10" fill="hsl(40 96% 53%)" />
+        {/* Stripes */}
+        <rect x="26" y="26" width="4" height="12" rx="1" fill="hsl(20 14% 10%)" />
+        <rect x="34" y="26" width="4" height="12" rx="1" fill="hsl(20 14% 10%)" />
+        {/* Wings */}
+        <ellipse cx="24" cy="24" rx="8" ry="5" fill="hsl(40 30% 96% / 0.6)" className="animate-pulse" />
+        <ellipse cx="40" cy="24" rx="8" ry="5" fill="hsl(40 30% 96% / 0.6)" className="animate-pulse" />
+        {/* Head */}
+        <circle cx="46" cy="32" r="6" fill="hsl(20 14% 10%)" />
+        {/* Eyes */}
+        <circle cx="48" cy="30" r="1.5" fill="hsl(40 30% 96%)" />
+        <circle cx="48" cy="34" r="1.5" fill="hsl(40 30% 96%)" />
+      </svg>
+    </motion.div>
+  );
+};
+
+// Section Reveal Animation Wrapper
+const RevealSection = ({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial={{ opacity: 0, y: 60 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
+      transition={{ duration: 0.8, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -103,6 +186,24 @@ const HomePage = () => {
     <div className="min-h-screen bg-background text-foreground">
       {/* Hero Section with Video */}
       <section ref={heroRef} className="relative h-screen overflow-hidden">
+        {/* Honey Drop Particles */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-[2]">
+          <HoneyDrop left="5%" delay={0} duration={10} />
+          <HoneyDrop left="15%" delay={2} duration={12} />
+          <HoneyDrop left="25%" delay={4} duration={9} />
+          <HoneyDrop left="40%" delay={1} duration={11} />
+          <HoneyDrop left="55%" delay={3} duration={10} />
+          <HoneyDrop left="70%" delay={5} duration={13} />
+          <HoneyDrop left="85%" delay={2.5} duration={11} />
+          <HoneyDrop left="95%" delay={4.5} duration={9} />
+        </div>
+
+        {/* Flying Bee Animation */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-[3]">
+          <FlyingBee delay={0} />
+          <FlyingBee delay={6} />
+        </div>
+
         {/* Floating Honeycomb Background */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-[1]">
           <FloatingHoneycomb className="absolute top-[10%] left-[5%] honeycomb-float" delay={0} size={80} />
@@ -259,64 +360,66 @@ const HomePage = () => {
       </section>
 
       {/* User Roles Section */}
-      <section id="roles" className="px-6 py-16 bg-background">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">
-            Choose Your Role
-          </h3>
-          <h2 className="text-3xl font-bold mb-4">
-            One Platform, Three Purposes
-          </h2>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            HiveCare serves urban citizens, tribal harvesters, and researchers with tailored tools for each stakeholder.
-          </p>
-        </motion.div>
+      <RevealSection className="px-6 py-16 bg-background">
+        <section id="roles">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">
+              Choose Your Role
+            </h3>
+            <h2 className="text-3xl font-bold mb-4">
+              One Platform, Three Purposes
+            </h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              HiveCare serves urban citizens, tribal harvesters, and researchers with tailored tools for each stakeholder.
+            </p>
+          </motion.div>
 
-        <div className="space-y-4 max-w-lg mx-auto">
-          {userRoles.map((role, index) => (
-            <motion.button
-              key={role.id}
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.15 }}
-              onClick={role.action}
-              className="w-full group"
-            >
-              <div className="relative p-5 rounded-3xl bg-card border border-border overflow-hidden hover:border-primary/30 transition-all duration-300">
-                {/* Background Gradient */}
-                <div className={`absolute inset-0 bg-gradient-to-r ${role.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
-                
-                <div className="relative flex items-center gap-4">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${role.gradient} flex items-center justify-center shadow-lg`}>
-                    <role.icon className="w-7 h-7 text-white" />
-                  </div>
+          <div className="space-y-4 max-w-lg mx-auto">
+            {userRoles.map((role, index) => (
+              <motion.button
+                key={role.id}
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.15 }}
+                onClick={role.action}
+                className="w-full group"
+              >
+                <div className="relative p-5 rounded-3xl bg-card border border-border overflow-hidden hover:border-primary/30 transition-all duration-300">
+                  {/* Background Gradient */}
+                  <div className={`absolute inset-0 bg-gradient-to-r ${role.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
                   
-                  <div className="flex-1 text-left">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-bold text-lg">{role.title}</h4>
-                      <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                        {role.subtitle}
-                      </span>
+                  <div className="relative flex items-center gap-4">
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${role.gradient} flex items-center justify-center shadow-lg`}>
+                      <role.icon className="w-7 h-7 text-white" />
                     </div>
-                    <p className="text-sm text-muted-foreground">{role.description}</p>
+                    
+                    <div className="flex-1 text-left">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-bold text-lg">{role.title}</h4>
+                        <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                          {role.subtitle}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{role.description}</p>
+                    </div>
+                    
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </div>
-                  
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                 </div>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </section>
+              </motion.button>
+            ))}
+          </div>
+        </section>
+      </RevealSection>
 
       {/* Stats Section */}
-      <section className="px-6 py-12 bg-card/50">
+      <RevealSection className="px-6 py-12 bg-card/50" delay={0.1}>
         <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
           {[
             { value: '80%', label: 'Wild Honey Production', icon: Hexagon, gradient: 'from-amber-500 to-orange-600' },
@@ -341,10 +444,10 @@ const HomePage = () => {
             </motion.div>
           ))}
         </div>
-      </section>
+      </RevealSection>
 
       {/* Conservation Message */}
-      <section className="px-6 py-12">
+      <RevealSection className="px-6 py-12" delay={0.15}>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -377,10 +480,10 @@ const HomePage = () => {
             </div>
           </div>
         </motion.div>
-      </section>
+      </RevealSection>
 
       {/* Quick Actions */}
-      <section className="px-6 py-8 pb-24">
+      <RevealSection className="px-6 py-8 pb-24" delay={0.2}>
         <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
           <Button
             onClick={() => navigate('/detect')}
@@ -398,7 +501,7 @@ const HomePage = () => {
             <span className="text-sm font-medium">View Map</span>
           </Button>
         </div>
-      </section>
+      </RevealSection>
 
       <BottomNav />
     </div>
