@@ -7,6 +7,10 @@ const corsHeaders = {
 
 interface AnalyzeRequest {
   imageBase64: string;
+  hasHiveOverview?: boolean;
+  hasBeeCloseup?: boolean;
+  hasWideAngle?: boolean;
+  location?: { lat: number; lng: number } | null;
 }
 
 serve(async (req) => {
@@ -21,49 +25,101 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const { imageBase64 }: AnalyzeRequest = await req.json();
+    const { imageBase64, hasHiveOverview, hasBeeCloseup, hasWideAngle, location }: AnalyzeRequest = await req.json();
     
     if (!imageBase64) {
       throw new Error('No image provided');
     }
 
-    console.log('Analyzing bee image...');
+    console.log('Analyzing bee image, base64 length:', imageBase64.length);
+    console.log('Context - hasHiveOverview:', hasHiveOverview, 'hasBeeCloseup:', hasBeeCloseup, 'hasWideAngle:', hasWideAngle);
+    if (location) {
+      console.log('Location provided:', location);
+    }
 
-    const systemPrompt = `You are HiveCare's AI bee identification system, specialized in identifying Indian honey bee species, particularly Apis dorsata (Giant Rock Bee).
+    const systemPrompt = `You are HiveCare's expert AI bee identification system, specialized in identifying Indian honey bee species with focus on Apis dorsata (Rock Bee / Giant Rock Bee).
 
-Your task is to analyze the image and provide:
-1. Species identification with confidence percentage
-2. Behavior assessment (calm, agitated, or shimmering)
-3. Safety recommendations
-4. Conservation insights
+YOUR PRIMARY TASK: Determine if the image shows a ROCK BEE (Apis dorsata) or something else.
 
-SPECIES IDENTIFICATION CRITERIA:
-- Apis dorsata (Rock Bee): Large size (17-20mm), open single-comb nests on cliffs/buildings, broad yellow abdominal bands
-- Apis cerana (Indian Hive Bee): Medium size (10-11mm), cavity nesting, darker coloration
-- Apis florea (Dwarf Bee): Small size (7-8mm), small exposed combs in shrubs
-- Apis mellifera (European Bee): Medium size, usually in managed hives/boxes
+## SPECIES IDENTIFICATION CRITERIA
 
-BEHAVIOR INDICATORS:
-- Calm: Bees moving slowly, no defensive patterns
-- Agitated: Rapid movement, guard bees visible
-- Shimmering: Visible wave pattern across colony (defensive display unique to Apis dorsata)
+**Apis dorsata (Rock Bee) - PRIMARY TARGET**
+- Size: LARGE (17-20mm body length) - largest of Indian honey bees
+- Nesting: Single OPEN comb, never in cavities, always exposed
+- Location: HIGH ELEVATIONS - building facades (3+ floors), water towers, bridges, tall trees, rock overhangs
+- Color: Distinct yellow-brown bands with darker stripes, golden-amber appearance
+- Behavior: Can show "shimmering" wave defense, generally defensive if disturbed
 
-IMPORTANT: Always provide safety-first recommendations. If you detect Apis dorsata or shimmering behavior, emphasize maintaining safe distance (minimum 20 feet/6 meters).
+**Apis cerana (Indian Hive Bee)**
+- Size: MEDIUM (10-11mm) - noticeably smaller than Rock Bee
+- Nesting: Multiple combs INSIDE cavities (tree hollows, wall cavities, hive boxes)
+- Color: Darker, less prominent banding
 
-Respond in JSON format:
+**Apis florea (Dwarf Bee)**
+- Size: SMALL (7-8mm) - smallest Indian honey bee
+- Nesting: Small single comb in LOW bushes/shrubs (under 3 meters height)
+- Color: Reddish-brown
+
+**Apis mellifera (European/Western Bee)**
+- Size: MEDIUM (12-15mm)
+- Nesting: Usually in managed wooden hive boxes
+- Color: Variable, often golden-yellow stripes
+
+## IF NOT A BEE
+If the image does NOT show bees, identify what the object IS:
+- Examples: wasp, hornet, fly, ant, bird, building, tree, random object, etc.
+- Be specific in identification
+
+## CONFIDENCE SCORING BREAKDOWN
+Provide separate scores (0-100) for:
+- sizeMatch: How well does observed size match Rock Bee (17-20mm)?
+- colorPattern: Does it show the characteristic yellow-brown banding?
+- nestingStyle: Is it an open single comb (high = Rock Bee indicator)?
+- altitudeIndicator: Is location elevated (high building, tall tree, cliff)?
+
+## BEHAVIOR ASSESSMENT
+- calm: Bees moving slowly, normal activity
+- agitated: Rapid movement, guard bees visible, buzzing intensifies
+- shimmering: Mexican wave pattern across colony surface (Rock Bee defense)
+- unknown: Cannot determine from image
+
+## SAFETY LEVELS
+- safe: Small colony, calm bees, low elevation (3+ meters safe distance okay)
+- caution: Medium colony, some activity, moderate elevation (maintain 6+ meters)
+- danger: Large colony, agitated/shimmering, high elevation, near human activity (stay 10+ meters, do not disturb)
+
+## RESPONSE FORMAT (JSON)
 {
-  "species": "apis_dorsata" | "apis_cerana" | "apis_florea" | "apis_mellifera" | "unknown",
-  "speciesName": "Human readable species name",
-  "confidence": 0-100,
+  "isRockBee": true/false,
+  "species": "apis_dorsata" | "apis_cerana" | "apis_florea" | "apis_mellifera" | "other_bee" | "not_a_bee" | "unknown",
+  "speciesName": "Human readable full name (e.g., 'Giant Rock Bee (Apis dorsata)')",
+  "identifiedObject": "If not a bee, what is the object? Otherwise null",
+  "confidence": 0-100 (overall confidence),
+  "confidenceBreakdown": {
+    "sizeMatch": 0-100,
+    "colorPattern": 0-100,
+    "nestingStyle": 0-100,
+    "altitudeIndicator": 0-100
+  },
+  "explainabilityDetails": [
+    "Reason 1 for this identification",
+    "Reason 2...",
+    "Reason 3..."
+  ],
   "behavior": "calm" | "agitated" | "shimmering" | "unknown",
-  "behaviorDescription": "Description of observed behavior",
+  "behaviorDescription": "Detailed description of observed behavior",
   "safetyLevel": "safe" | "caution" | "danger",
-  "safetyMessage": "Safety recommendation for the user",
+  "safetyMessage": "Clear safety advice for the user",
   "proximityWarning": true/false,
   "recommendedDistance": "Distance in meters",
-  "conservationNote": "Brief conservation insight about this species",
-  "explainability": "Why you identified this species (features observed)"
-}`;
+  "conservationNote": "Brief conservation insight - Rock Bees produce 80% of wild honey in India, consider ethical relocation over extermination"
+}
+
+IMPORTANT: 
+- If you cannot clearly identify bees in the image, set isRockBee to false and species to "unknown" or "not_a_bee"
+- Always prioritize human safety in your recommendations
+- Be specific in explainability - cite visual features you observed
+- Rock Bees are PROTECTED - always recommend ethical relocation, never extermination`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -80,7 +136,13 @@ Respond in JSON format:
             content: [
               {
                 type: 'text',
-                text: 'Analyze this image for bee species identification and behavior assessment. Provide your analysis in the specified JSON format.'
+                text: `Analyze this image for Rock Bee (Apis dorsata) identification. 
+
+Image context:
+- This is ${hasBeeCloseup ? 'a close-up of bees' : hasHiveOverview ? 'an overview of a hive/colony' : hasWideAngle ? 'a wide angle showing location/altitude' : 'a general capture'}
+${location ? `- GPS coordinates: ${location.lat}, ${location.lng}` : '- No GPS data available'}
+
+Provide your complete analysis in the specified JSON format. Be thorough in your explainability details - explain WHY you made this identification based on visual features you can observe.`
               },
               {
                 type: 'image_url',
@@ -91,7 +153,7 @@ Respond in JSON format:
             ]
           }
         ],
-        max_tokens: 1024,
+        max_tokens: 2048,
       }),
     });
 
@@ -122,7 +184,7 @@ Respond in JSON format:
     const aiResponse = await response.json();
     const content = aiResponse.choices?.[0]?.message?.content;
     
-    console.log('AI Response received:', content);
+    console.log('AI Response received, length:', content?.length);
 
     // Parse the JSON from the AI response
     let analysis;
@@ -133,23 +195,56 @@ Respond in JSON format:
                         [null, content];
       const jsonStr = jsonMatch[1] || content;
       analysis = JSON.parse(jsonStr.trim());
+      console.log('Successfully parsed AI response');
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
+      console.error('Raw content:', content);
       // Return a default response if parsing fails
       analysis = {
+        isRockBee: false,
         species: 'unknown',
-        speciesName: 'Unable to identify',
+        speciesName: 'Unable to Identify',
+        identifiedObject: 'Could not analyze image content',
         confidence: 0,
+        confidenceBreakdown: {
+          sizeMatch: 0,
+          colorPattern: 0,
+          nestingStyle: 0,
+          altitudeIndicator: 0
+        },
+        explainabilityDetails: [
+          'Image analysis was inconclusive',
+          'Please try capturing a clearer image',
+          'Ensure good lighting and focus on the bees'
+        ],
         behavior: 'unknown',
         behaviorDescription: 'Unable to assess behavior from this image.',
         safetyLevel: 'caution',
-        safetyMessage: 'Exercise caution around any bee colony. Maintain a safe distance.',
+        safetyMessage: 'Exercise caution around any bee colony. Maintain a safe distance of at least 6 meters.',
         proximityWarning: true,
         recommendedDistance: '6 meters',
-        conservationNote: 'All bees are important pollinators. Consider ethical relocation over extermination.',
-        explainability: 'Image analysis was inconclusive.'
+        conservationNote: 'All bees are important pollinators. If you need removal, consider ethical relocation services rather than extermination.'
       };
     }
+
+    // Ensure all required fields exist with defaults
+    analysis = {
+      isRockBee: analysis.isRockBee ?? false,
+      species: analysis.species ?? 'unknown',
+      speciesName: analysis.speciesName ?? 'Unknown Species',
+      identifiedObject: analysis.identifiedObject ?? null,
+      confidence: analysis.confidence ?? 0,
+      confidenceBreakdown: analysis.confidenceBreakdown ?? null,
+      explainabilityDetails: analysis.explainabilityDetails ?? [],
+      behavior: analysis.behavior ?? 'unknown',
+      behaviorDescription: analysis.behaviorDescription ?? 'Unable to assess behavior.',
+      safetyLevel: analysis.safetyLevel ?? 'caution',
+      safetyMessage: analysis.safetyMessage ?? 'Maintain safe distance from any bee colony.',
+      proximityWarning: analysis.proximityWarning ?? true,
+      recommendedDistance: analysis.recommendedDistance ?? '6 meters',
+      conservationNote: analysis.conservationNote ?? 'Bees are essential pollinators. Consider ethical relocation.',
+      explainability: analysis.explainabilityDetails?.join('. ') || analysis.explainability || 'Analysis complete.'
+    };
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
